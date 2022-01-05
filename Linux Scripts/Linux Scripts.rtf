@@ -1,0 +1,285 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2513
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh12960\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs24 \cf0 \ul \ulc0 for_loops.sh
+\f1\b0 \ulnone \
+\
+#!/bin/bash\
+\
+# Create Variables\
+nums=$(echo \{0..9\})\
+states=('Nebraska' 'California' 'Texas' 'Hawaii' 'Washington')\
+ls_out=$(ls)\
+\
+execs=$(find /home -type f -perm 777 2>/dev/null)\
+\
+# Create For Loops\
+# Create a loop that prints only 3, 5 and 7\
+for num in $\{nums[@]\}; do\
+  if [ $num = 3 ] || [ $num = 5 ] || [ $num = 7 ]; then\
+    echo $num\
+  fi\
+done\
+\
+# Create a loop that looks for 'Hawaii'\
+for state in $\{states[@]\}; do\
+  if [ $state == 'Hawaii' ]; then\
+    echo "Hawaii is the best!"\
+  else\
+    echo "I'm not a fan of Hawaii."\
+  fi\
+done\
+\
+# Create a `for` loop that prints out each item in your variable that holds the output of the `ls` command.\
+for x in $\{ls_out[@]\}; do\
+  echo $x\
+done\
+\
+\
+\
+
+\f0\b \ul sys_info.sh
+\f1\b0 \ulnone \
+\
+#!/bin/bash\
+\
+mkdir ~/research 2>/dev/null\
+\
+echo "A Quick System Audit Script" >~/research/sys_info.txt\
+date >>~/research/sys_info.txt\
+echo "" >>~/research/sys_info.txt\
+echo "Machine Type Info:" >>~/research/sys_info.txt\
+echo $MACHTYPE >>~/research/sys_info.txt\
+echo -e "Uname info: $(uname -a) \\n" >>~/research/sys_info.txt\
+echo -e "IP Info: $(ip addr | grep inet | tail -2 | head -1) \\n" >>~/research/sys_info.txt\
+echo -e "Hostname: $(hostname -s) \\n" >>~/research/sys_info.txt\
+echo "DNS Servers: " >>~/research/sys_info.txt\
+cat /etc/resolv.conf >>~/research/sys_info.txt\
+echo -e "\\nMemory Info:" >>~/research/sys_info.txt\
+free >>~/research/sys_info.txt\
+echo -e "\\nCPU Info:" >>~/research/sys_info.txt\
+lscpu | grep CPU >>~/research/sys_info.txt\
+echo -e "\\nDisk Usage:" >>~/research/sys_info.txt\
+df -H | head -2 >>~/research/sys_info.txt\
+echo -e "\\nWho is logged in: \\n $(who -a) \\n" >>~/research/sys_info.txt\
+echo -e "\\nExec Files:" >>~/research/sys_info.txt\
+find /home -type f -perm 777 >>~/research/sys_info.txt\
+echo -e "\\nTop 10 Processes" >>~/research/sys_info.txt\
+ps aux -m | awk \{'print $1, $2, $3, $4, $11'\} | head >>~/research/sys_info.txt\
+\
+\
+\
+
+\f0\b \ul sys_info_2.sh\
+
+\f1\b0 \ulnone \
+#!/bin/bash\
+\
+#Check if script was run as root. Exit if false.\
+if [ $UID -ne 0 ]; then\
+  echo "Please run this script as root."\
+  exit\
+fi\
+\
+# Define Variables\
+output=$HOME/research/sys_info.txt\
+ip=$(ip addr | grep inet | tail -2 | head -1)\
+execs=$(sudo find /home -type f -perm 777 2>/dev/null)\
+cpu=$(lscpu | grep CPU)\
+disk=$(df -H | head -2)\
+\
+# Define Lists to use later\
+commands=(\
+  'date'\
+  'uname -a'\
+  'hostname -s'\
+)\
+\
+files=(\
+  '/etc/passwd'\
+  '/etc/shadow'\
+)\
+\
+#Check for research directory. Create it if needed.\
+if [ ! -d $HOME/research ]; then\
+  mkdir $HOME/research\
+fi\
+\
+# Check for output file. Clear it if needed.\
+if [ -f $output ]; then\
+  >$output\
+fi\
+\
+##################################################\
+#Start Script\
+\
+echo "A Quick System Audit Script" >>$output\
+echo "" >>$output\
+\
+for x in \{0..2\}; do\
+  results=$($\{commands[$x]\})\
+  echo "Results of "$\{commands[$x]\}" command:" >>$output\
+  echo $results >>$output\
+  echo "" >>$output\
+done\
+\
+# Display Machine type\
+echo "Machine Type Info:" >>$output\
+echo -e "$MACHTYPE \\n" >>$output\
+\
+# Display IP Address info\
+echo -e "IP Info:" >>$output\
+echo -e "$ip \\n" >>$output\
+\
+# Display Memory usage\
+echo -e "\\nMemory Info:" >>$output\
+free >>$output\
+\
+#Display CPU usage\
+echo -e "\\nCPU Info:" >>$output\
+lscpu | grep CPU >>$output\
+\
+# Display Disk usage\
+echo -e "\\nDisk Usage:" >>$output\
+df -H | head -2 >>$output\
+\
+#Display who is logged in\
+echo -e "\\nCurrent user login information: \\n $(who -a) \\n" >>$output\
+\
+# Display DNS Info\
+echo "DNS Servers: " >>$output\
+cat /etc/resolv.conf >>$output\
+\
+# List exec files\
+echo -e "\\nexec Files:" >>$output\
+for exec in $execs; do\
+  echo $exec >>$output\
+done\
+\
+# List top 10 processes\
+echo -e "\\nTop 10 Processes" >>$output\
+ps aux --sort -%mem | awk \{'print $1, $2, $3, $4, $11'\} | head >>$output\
+\
+# Check the permissions on files\
+echo -e "\\nThe permissions for sensitive /etc files: \\n" >>$output\
+for file in $\{files[@]\}; do\
+  ls -l $file >>$output\
+done\
+\
+\
+
+\f0\b \ul arguments.sh
+\f1\b0 \ulnone \
+\
+#!/bin/bash\
+# Quick setup script for new server.\
+#\
+# Check for an output file\
+if [ ! $1 ]\
+then\
+    echo "Please specify an output file."\
+    exit\
+fi\
+\
+# Make sure the script is run as root.\
+if [ ! $UID = 0 ]\
+then\
+  echo "Please run this script as root."\
+  exit\
+fi\
+\
+# Log file header\
+echo "Log file for general server setup script." >> $1\
+echo "############################" >> $1\
+echo "Log generated on: $(date)" >> $1\
+echo "############################" >> $1\
+echo "" >> $1\
+\
+# List of packages needed on the System\
+packages=(\
+  'nano'\
+  'wget'\
+  'net-tools'\
+  'python'\
+  'tripwire'\
+  'tree'\
+  'curl'\
+)\
+\
+# Check for installed packages. If they are not installed, install them.\
+for package in $\{packages[@]\};\
+do\
+  if [ ! $(which $package) ];\
+  then\
+    apt install -y $package\
+  fi\
+done\
+\
+# Print it out and Log it\
+echo "$(date) Installed needed pacakges: $\{packages[@]\}" | tee -a $1\
+\
+# Create a sysadmin user with no password (password to be created upon login)\
+useradd sysadmin\
+chage -d 0 sysadmin\
+\
+# Add sysadmin user to the `sudo` group\
+usermod -aG sudo sysadmin\
+\
+# Print it out and Log it\
+echo "$(date) Created sys_admin user. Password to be created upon login" | tee -a $1\
+\
+# Remove roots login shell and lock the root account.\
+usermod -s /sbin/nologin root\
+usermod -L root\
+\
+# Print it out and Log it\
+echo "$(date) Disabled root shell. Root user cannot login." | tee -a $1\
+\
+# Change permissions on sensitive files\
+chmod 600 /etc/shadow\
+chmod 600 /etc/gshadow\
+chmod 644 /etc/group\
+chmod 644 /etc/passwd\
+\
+# Print it out and Log it\
+echo "$(date) Changed permissions on sensitive /etc files." | tee -a $1\
+\
+scripts=/home/sysadmin/scripts\
+# Setup scripts folder\
+if [ ! -d $scripts ];\
+then\
+  mkdir $scripts\
+  chown sysadmin:sysadmin $scripts\
+fi\
+\
+bashrc=/home/sysadmin/.bashrc\
+# Add scripts to .bashrc\
+echo "" >> $bashrc\
+echo "PATH=$PATH:$scripts" >> $bashrc\
+echo "" >> $bashrc\
+\
+# Print it out and Log it\
+echo "$(date) Added ~/scripts directory to sysadmin's PATH." | tee -a $1\
+\
+# Add custom aliases to $bashrc\
+cat >> /home/sysadmin/.bashrc << END\
+Custom Aliases\
+alias reload='source ~/.bashrc && echo Bash config reloaded'\
+alias lsa='ls -a'\
+alias docs='cd ~/Documents'\
+alias dwn='cd ~/Downloads'\
+alias etc='cd /etc'\
+alias rc='nano ~/.bashrc'\
+END\
+\
+# Print it out and Log it\
+echo "$(date) Added custom alias collection to sysadmin's bashrc." | tee -a $1\
+\
+#Print out and log Exit\
+echo "$(date) Script Finished. Exiting." | tee -a $1\
+\
+exit}
